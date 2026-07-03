@@ -24,7 +24,7 @@ try:
     _BOT_USER_ID = _telebot.TeleBot(BOT_TOKEN).get_me().id
 except Exception:
     pass
-from database import register_user, get_usd_balance, get_user, get_connection, _cur, ban_user, unban_user, add_usd_balance
+from database import init_db, register_user, get_usd_balance, get_user, get_connection, _cur, ban_user, unban_user, add_usd_balance
 from database.models import (
     get_all_models, get_model, get_all_media, get_model_by_telegram_id,
     add_model, set_preview_photo, add_model_media,
@@ -42,6 +42,14 @@ from database.withdrawals import get_pending_withdrawals, get_withdrawal, proces
 from utils.cryptobot import is_configured as _cp_configured, create_invoice, get_invoice, transfer as cp_transfer, usd_to_asset
 
 app = FastAPI(docs_url=None, redoc_url=None)
+
+# Run DB migrations at API startup so both processes keep schema in sync
+try:
+    init_db()
+    from database.models import init_models_db
+    init_models_db()
+except Exception as _e:
+    print(f"[API] DB init warning: {_e}")
 
 MINI_APP_DEV = os.environ.get("MINI_APP_DEV", "0") == "1"
 if MINI_APP_DEV:
