@@ -151,8 +151,11 @@ def get_all_models() -> list:
     conn = get_connection()
     cursor = _cur(conn)
     cursor.execute('''
-        SELECT * FROM models WHERE is_active = 1
-        ORDER BY created_at DESC
+        SELECT m.*, u.last_active
+        FROM models m
+        LEFT JOIN users u ON u.user_id = m.telegram_user_id
+        WHERE m.is_active = 1
+        ORDER BY m.created_at DESC
     ''')
     rows = cursor.fetchall()
     conn.close()
