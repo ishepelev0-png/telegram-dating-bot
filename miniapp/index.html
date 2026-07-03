@@ -137,6 +137,20 @@
       font-size: 12px;
       margin-top: 1px;
     }
+    .card-status {
+      color: rgba(255,255,255,0.7);
+      font-size: 11px;
+      margin-top: 2px;
+    }
+    .online-dot {
+      position: absolute;
+      top: 8px; left: 8px;
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      background: var(--success);
+      box-shadow: 0 0 0 2px rgba(0,0,0,0.5), 0 0 6px var(--success);
+      z-index: 2;
+    }
     .active-badge {
       position: absolute;
       top: 8px; right: 8px;
@@ -1431,6 +1445,15 @@ function chatGoBack() {
 
 // ── Grid ─────────────────────────────────────────────────
 
+function onlineStatus(last_active) {
+  if (!last_active) return null;
+  const diff = Math.floor(Date.now() / 1000) - last_active;
+  if (diff < 300)   return {dot: true,  text: 'онлайн'};
+  if (diff < 3600)  return {dot: false, text: `${Math.floor(diff / 60)} мин назад`};
+  if (diff < 86400) return {dot: false, text: `${Math.floor(diff / 3600)}ч назад`};
+  return null;
+}
+
 function renderGrid(models) {
   const target = document.getElementById('fan-tab-content') || document.getElementById('content');
   if (!models || !models.length) {
@@ -1442,20 +1465,25 @@ function renderGrid(models) {
       </div>`;
     return;
   }
-  const html = models.map(m => `
+  const html = models.map(m => {
+    const status = onlineStatus(m.last_active);
+    return `
     <div class="card" onclick="openProfile(${m.id})" data-id="${m.id}">
       <div class="card-photo-wrap">
         <div class="card-placeholder" id="ph-${m.id}">💄</div>
         ${m.preview_photo
           ? `<img class="card-photo loading" id="img-${m.id}" alt="${esc(m.name)}">`
           : ''}
+        ${status && status.dot ? '<div class="online-dot"></div>' : ''}
         <div class="card-gradient"></div>
         <div class="card-overlay">
           <div class="card-name">${esc(m.name)}</div>
           ${m.age ? `<div class="card-age">${m.age} лет</div>` : ''}
+          ${status ? `<div class="card-status">${esc(status.text)}</div>` : ''}
         </div>
       </div>
-    </div>`).join('');
+    </div>`;
+  }).join('');
   target.innerHTML = `<div class="grid">${html}</div>`;
 
   // Load photos lazily
