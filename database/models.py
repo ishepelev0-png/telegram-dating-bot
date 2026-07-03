@@ -150,13 +150,18 @@ def add_model(name: str, age_or_birthdate, username: str, description: str) -> i
 def get_all_models() -> list:
     conn = get_connection()
     cursor = _cur(conn)
-    cursor.execute('''
-        SELECT m.*, u.last_active
-        FROM models m
-        LEFT JOIN users u ON u.user_id = m.telegram_user_id
-        WHERE m.is_active = 1
-        ORDER BY m.created_at DESC
-    ''')
+    try:
+        cursor.execute('''
+            SELECT m.*, u.last_active
+            FROM models m
+            LEFT JOIN users u ON u.user_id = m.telegram_user_id
+            WHERE m.is_active = 1
+            ORDER BY m.created_at DESC
+        ''')
+    except Exception:
+        # last_active column may not exist yet — fall back gracefully
+        conn.rollback()
+        cursor.execute('SELECT * FROM models WHERE is_active = 1 ORDER BY created_at DESC')
     rows = cursor.fetchall()
     conn.close()
     return [_enrich_model(row) for row in rows]

@@ -133,7 +133,8 @@ def init_db():
     ]:
         try:
             cursor.execute(f"ALTER TABLE users ADD COLUMN IF NOT EXISTS {col} {definition}")
-        except Exception:
+        except Exception as e:
+            print(f"[DB] Миграция {col}: {e}")
             conn.rollback()
 
     try:
