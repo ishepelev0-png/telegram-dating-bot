@@ -129,6 +129,7 @@ def init_db():
         ("balance_usd",  "REAL DEFAULT 0.0"),
         ("user_role",    "TEXT DEFAULT 'fan'"),
         ("is_banned",    "INTEGER DEFAULT 0"),
+        ("last_active",  "BIGINT DEFAULT NULL"),
     ]:
         try:
             cursor.execute(f"ALTER TABLE users ADD COLUMN IF NOT EXISTS {col} {definition}")

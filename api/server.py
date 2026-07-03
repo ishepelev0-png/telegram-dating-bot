@@ -175,10 +175,24 @@ def get_me(authorization: str = Header(None)):
     }
 
 
+def _touch_active(uid: int):
+    """Updates last_active timestamp for the user; errors are silently ignored."""
+    try:
+        conn = get_connection()
+        cur = conn.cursor()
+        cur.execute("UPDATE users SET last_active = %s WHERE user_id = %s",
+                    (int(time.time()), uid))
+        conn.commit()
+        conn.close()
+    except Exception:
+        pass
+
+
 @app.get("/api/model/dashboard")
 def model_dashboard(authorization: str = Header(None)):
     user = _auth(authorization)
     uid = int(user["id"])
+    _touch_active(uid)
     db_user = get_user(uid)
     model_profile = get_model_by_telegram_id(uid)
     if not model_profile:
@@ -550,6 +564,7 @@ def list_models(authorization: str = Header(None)):
             "age":           m.get("age"),
             "description":   m.get("description") or "",
             "preview_photo": m.get("preview_photo"),
+            "last_active":   m.get("last_active"),
         }
         for m in models
     ]
