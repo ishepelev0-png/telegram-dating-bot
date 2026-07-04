@@ -227,25 +227,40 @@ def register_callback_handlers(bot):
     @bot.callback_query_handler(func=lambda call: call.data == "about_system")
     def about_system(call):
         bot.answer_callback_query(call.id)
+        admin_username = None
+        if ADMIN_IDS:
+            try:
+                chat = bot.get_chat(ADMIN_IDS[0])
+                admin_username = chat.username
+            except Exception:
+                pass
+        support_line = ("   @" + admin_username) if admin_username else "   напиши в главное меню"
         text = (
-            "ℹ️ Miss Moldova — как это работает\n\n"
-            "Платформа для прямого общения с моделями.\n\n"
+            "ℹ️ *Miss Moldova* — как это работает\n\n"
+            "Платформа для прямого общения с моделями Молдовы.\n\n"
             "━━━━━━━━━━━━━━━\n"
-            "💵 Пополнение баланса:\n"
-            "   $10 / $25 / $50 через LTC (Litecoin)\n\n"
+            "💵 *Пополнение баланса:*\n"
+            "   $10 / $25 / $50\n"
+            "   через LTC (Litecoin) или USDT (CryptoBot)\n\n"
             "━━━━━━━━━━━━━━━\n"
-            "💬 Чат с моделью:\n"
-            "   $5 — 24 часа неограниченного общения\n\n"
+            "💬 *Чат с моделью:*\n"
+            "   $5 — 24 часа переписки\n"
+            "   Фото и видео — отдельно по цене модели\n\n"
             "━━━━━━━━━━━━━━━\n"
-            "🔒 Анонимность:\n"
+            "🔒 *Анонимность:*\n"
             "   Бот не раскрывает контакты\n"
-            "   Всё общение через платформу\n\n"
+            "   Всё общение только через платформу\n\n"
             "━━━━━━━━━━━━━━━\n"
-            "👑 VIP Клуб:\n"
-            "   Расписание живых сессий\n"
-            "   Анонсы и Q&A с моделями"
+            "📋 *Правила:*\n"
+            "   · Запрещённый контент → бан без предупреждения\n"
+            "   · Попытка обойти платформу → бан\n"
+            "   · Уважай моделей — они тоже люди\n\n"
+            "━━━━━━━━━━━━━━━\n"
+            "🆘 *Поддержка:*\n"
+            + support_line
         )
-        safe_edit(bot, call, text, reply_markup=get_main_menu())
+        markup = get_main_menu()
+        safe_edit(bot, call, text, reply_markup=markup, parse_mode="Markdown")
 
     # ── Мой профиль ──────────────────────────
 
