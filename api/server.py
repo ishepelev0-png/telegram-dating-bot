@@ -183,6 +183,60 @@ def get_me(authorization: str = Header(None)):
     }
 
 
+@app.get("/api/me/profile")
+def me_profile(authorization: str = Header(None)):
+    user = _auth(authorization)
+    uid = int(user["id"])
+    db_user = get_user(uid) or {}
+
+    created_at = db_user.get("created_at") or int(time.time())
+    days_in_club = (int(time.time()) - int(created_at)) // 86400
+
+    chats = get_fan_active_chats(uid)
+    now = int(time.time())
+    chats_data = []
+    for ch in chats:
+        model = get_model(ch["model_id"])
+        if not model:
+            continue
+        remaining = max(0, ch["expires_at"] - now)
+        chats_data.append({
+            "model_id":   ch["model_id"],
+            "model_name": model.get("name", ""),
+            "model_photo": model.get("preview_photo") or "",
+            "expires_at":  ch["expires_at"],
+            "hours_left":  remaining // 3600,
+            "minutes_left": (remaining % 3600) // 60,
+        })
+
+    conn = get_connection()
+    cur = _cur(conn)
+    cur.execute(
+        "SELECT amount_usd, reason, created_at FROM balance_transactions "
+        "WHERE user_id = %s ORDER BY created_at DESC LIMIT 10",
+        (uid,)
+    )
+    txs = [dict(r) for r in cur.fetchall()]
+    conn.close()
+
+    return {
+        "user_id":     uid,
+        "username":    db_user.get("username") or user.get("username", ""),
+        "full_name":   user.get("first_name", ""),
+        "days_in_club": days_in_club,
+        "balance_usd": round(float(db_user.get("balance_usd", 0)), 2),
+        "active_chats": chats_data,
+        "transactions": [
+            {
+                "amount_usd": round(float(t["amount_usd"]), 2),
+                "reason":     t["reason"],
+                "created_at": t["created_at"],
+            }
+            for t in txs
+        ],
+    }
+
+
 def _touch_active(uid: int):
     """Updates last_active timestamp for the user; errors are silently ignored."""
     try:
